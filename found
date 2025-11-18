@@ -1,0 +1,56 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ======== Load Data ========
+df = pd.read_csv("/content/play.csv")  # adjust path if needed
+df = df.sort_values(["試合ID", "履歴No"]).reset_index(drop=True)
+
+# ======== Extract Shots ========
+shots = df[df["F_シュート"] == 1].copy()
+
+# ======== Count passes before each shot ========
+pass_counts = []
+
+for idx, row in shots.iterrows():
+    game = row["試合ID"]
+    atk = row["攻撃履歴No"]
+    hist = row["履歴No"]
+    
+    # same match + same attack + before shot
+    seq = df[(df["試合ID"] == game) &
+             (df["攻撃履歴No"] == atk) &
+             (df["履歴No"] < hist)]
+    
+    cnt = int(seq["F_パス"].fillna(0).sum())
+    pass_counts.append(cnt)
+
+pass_counts = np.array(pass_counts)
+
+# ======== ① Histogram ========
+plt.figure(figsize=(10,5))
+plt.hist(pass_counts, bins=range(0, max(pass_counts)+2), rwidth=0.8)
+plt.xlabel("Number of Passes Before Shot")
+plt.ylabel("Frequency")
+plt.title("Distribution of Pass Counts Leading to Shots")
+plt.grid(True)
+plt.show()
+
+# ======== ② Cumulative Distribution F(k) ========
+max_k = max(pass_counts)
+ks = list(range(0, max_k+1))
+cum = [float(np.mean(pass_counts <= k)) for k in ks]
+
+dist_df = pd.DataFrame({"k": ks, "Cumulative Ratio": cum})
+display(dist_df)
+
+# ======== ③ Key Statistics ========
+print("=== Key Stats ===")
+print(f"Mean: {pass_counts.mean():.2f}")
+print(f"Median: {np.median(pass_counts):.2f}")
+print(f"Min: {pass_counts.min()}")
+print(f"Max: {pass_counts.max()}")
+
+print("\n=== Core Zones (Important Regions) ===")
+for k in [1,2,3,4,5]:
+    print(f"k ≤ {k}: {np.mean(pass_counts <= k)*100:.1f}% of shots come from attacks with ≤{k} passes.")
