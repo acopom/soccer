@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # ======== Load Data ========
-df = pd.read_csv("/content/play.csv")  # adjust path if needed
+df = pd.read_csv("/content/play.csv")  # play.csvをファイルからダウンロードして読み込ませる
 df = df.sort_values(["試合ID", "履歴No"]).reset_index(drop=True)
 
 # ======== Extract Shots ========
